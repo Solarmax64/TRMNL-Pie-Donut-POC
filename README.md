@@ -117,5 +117,5 @@ Legend swatches are rendered with a **scale-matched pattern set**, ensuring the 
 MIT
 
 ## Credits
-- Built for the TRMNL ecosystem by Bryan Dort + ChatGPT.  
+- Built for the TRMNL ecosystem by Solarmax.
 - Breed order based on AKC Top-10 (values normalized for demo purposes).
