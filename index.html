@@ -1,0 +1,305 @@
+
+<!doctype html>
+<html lang="en">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>TRMNL Pie POC — Patterns & Grayscale</title>
+<body style="margin:0;padding:20px;background:#f2f2f2">
+  <!-- Drop-in pie component -->
+  <div class="ns-pie10"
+       data-title="US Dog Breeds (Top 10)"
+       data-mode="patterns"
+       data-thickness="42"
+       data-size="320"
+       data-count="10"
+       data-piey="0"
+       data-rowoffset="0"
+       data-patscale="140"
+       data-swatch="28"
+       data-legend-min="180">
+    <style>
+      .ns-pie10{--size:320;--thickness:42;--font:Inter,system-ui,Segoe UI,Arial,sans-serif;--fg:#111;--grid-gap:12px;--swatch:28px;--legend-min:180px;--row-offset:0px;display:grid;gap:var(--grid-gap);font-family:var(--font);color:var(--fg)}
+      .ns-pie10 .head{display:flex;align-items:center;justify-content:space-between;gap:8px}
+      .ns-pie10 .title{font-weight:700;font-size:14px;letter-spacing:.2px}
+      .ns-pie10 .palette{display:flex;align-items:center;gap:6px}
+      .ns-pie10 .palette select{font:inherit}
+      .ns-pie10 .controls{display:flex;flex-wrap:nowrap;gap:6px;align-items:center}
+      .ns-pie10 .ctrl{display:flex;align-items:center;gap:6px;font-size:12px;padding:4px 8px;border:1px solid #ddd;border-radius:10px;background:#fafafa}
+      .ns-pie10 .ctrl input[type="range"]{width:88px;accent-color:#000}
+      .ns-pie10 .ctrl .val{min-width:34px;text-align:right;font-variant-numeric:tabular-nums;opacity:.8}
+      .ns-pie10 .wrap{display:grid;grid-template-columns:max-content minmax(var(--legend-min),1fr);gap:var(--grid-gap);align-items:start;transform:translateY(var(--row-offset))}
+      .ns-pie10 .chart{width:calc(var(--size) * 1px);max-width:100%;aspect-ratio:1/1}
+      .ns-pie10 .legend{display:flex;flex-direction:column;gap:6px;min-width:var(--legend-min)}
+      .ns-pie10 .legend-row{display:grid;grid-template-columns:var(--swatch) minmax(0,1fr) auto;gap:8px;align-items:center;min-height:24px}
+      .ns-pie10 .legend .name{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;opacity:.95}
+      .ns-pie10 .legend .val{font-variant-numeric:tabular-nums;text-align:right;width:56px;opacity:.78}
+      .ns-pie10 .sw{width:var(--swatch);height:var(--swatch);border:1px solid #000;display:block}
+      .ns-pie10 .hid{position:absolute;left:-9999px}
+      .ns-pie10{--gray-1:#0f0f0f;--gray-2:#1f1f1f;--gray-3:#2f2f2f;--gray-4:#404040;--gray-5:#555;--gray-6:#6a6a6a;--gray-7:#7f7f7f;--gray-8:#9a9a9a;--gray-9:#bfbfbf;--gray-10:#e0e0e0}
+      @media (max-width:720px){.ns-pie10 .controls{flex-wrap:wrap}.ns-pie10 .wrap{grid-template-columns:1fr}.ns-pie10 .legend{order:2}}
+    </style>
+
+    <div class="head">
+      <div class="title"></div>
+      <div class="palette">
+        <label class="hid" for="mode">Palette</label>
+        <select class="knob-mode">
+          <option value="patterns">Patterns</option>
+          <option value="grayscale">Grayscale</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="controls">
+      <div class="ctrl">
+        <span>Size</span>
+        <input class="knob-size" type="range" min="120" max="720" step="10">
+        <span class="val v-size"></span>
+      </div>
+      <div class="ctrl">
+        <span>Pie&nbsp;Y</span>
+        <input class="knob-offset" type="range" min="-300" max="300" step="5">
+        <span class="val v-offset"></span>
+      </div>
+      <div class="ctrl">
+        <span>Row&nbsp;Y</span>
+        <input class="knob-row" type="range" min="-400" max="400" step="5">
+        <span class="val v-row"></span>
+      </div>
+      <div class="ctrl">
+        <span>Items</span>
+        <input class="knob-count" type="range" min="1" max="10" step="1">
+        <span class="val v-count"></span>
+      </div>
+    </div>
+
+    <div class="wrap">
+      <svg class="chart" viewBox="0 0 1000 1000" aria-hidden="true"></svg>
+      <div class="legend"></div>
+    </div>
+
+    <script type="application/json" class="data">
+    {
+      "items": [
+        { "name": "French Bulldog",               "value": 18.2 },
+        { "name": "Labrador Retriever",           "value": 16.4 },
+        { "name": "Golden Retriever",             "value": 14.5 },
+        { "name": "German Shepherd Dog",          "value": 12.7 },
+        { "name": "Poodle",                       "value": 10.9 },
+        { "name": "Bulldog",                      "value": 9.1 },
+        { "name": "Dachshund",                    "value": 7.3 },
+        { "name": "Beagle",                       "value": 5.5 },
+        { "name": "Rottweiler",                   "value": 3.6 },
+        { "name": "German Shorthaired Pointer",   "value": 1.8 }
+      ],
+      "unit":"%"
+    }
+    </script>
+
+    <script>
+      (function(){
+        const root = document.currentScript.closest('.ns-pie10');
+        const titleEl = root.querySelector('.title');
+        const svg = root.querySelector('svg.chart');
+        const legend = root.querySelector('.legend');
+        const modeSel = root.querySelector('.knob-mode');
+        const sizeRange = root.querySelector('.knob-size');
+        const offsetRange = root.querySelector('.knob-offset');
+        const rowRange = root.querySelector('.knob-row');
+        const countRange = root.querySelector('.knob-count');
+        const vSize = root.querySelector('.v-size');
+        const vOffset = root.querySelector('.v-offset');
+        const vRow = root.querySelector('.v-row');
+        const vCount = root.querySelector('.v-count');
+
+        const cfg = {
+          title: root.dataset.title || 'Pie',
+          mode: (root.dataset.mode || 'patterns').toLowerCase(),
+          thickness: Math.max(1, Math.min(95, parseInt(root.dataset.thickness||'42',10))),
+          size: parseInt(root.dataset.size||'320',10),
+          count: Math.max(1, Math.min(10, parseInt(root.dataset.count||'10',10))),
+          piey: parseInt(root.dataset.piey||'0',10),
+          rowoffset: parseInt(root.dataset.rowoffset||'0',10),
+          patscale: Math.max(60, Math.min(200, parseInt(root.dataset.patscale||'140',10))),
+          swatch: parseInt(root.dataset.swatch||'28',10),
+          legendMin: parseInt(root.dataset.legendMin||root.dataset.legendmin||'180',10)
+        };
+        root.style.setProperty('--size', String(cfg.size));
+        root.style.setProperty('--thickness', String(cfg.thickness));
+        root.style.setProperty('--swatch', cfg.swatch + 'px');
+        root.style.setProperty('--legend-min', cfg.legendMin + 'px');
+        root.style.setProperty('--row-offset', cfg.rowoffset + 'px');
+        titleEl.textContent = cfg.title;
+
+        const payload = JSON.parse(root.querySelector('script.data').textContent);
+        const allItems = payload.items.slice(0,10);
+
+        const defs = document.createElementNS('http://www.w3.org/2000/svg','defs');
+        svg.appendChild(defs);
+        const g = document.createElementNS('http://www.w3.org/2000/svg','g');
+        svg.appendChild(g);
+
+        const uid = Math.random().toString(36).slice(2,8);
+        const VB = 1000;
+
+        modeSel.value = cfg.mode;
+        sizeRange.value = cfg.size;
+        offsetRange.value = cfg.piey;
+        rowRange.value = cfg.rowoffset;
+        countRange.value = cfg.count;
+        vSize.textContent = cfg.size + 'px';
+        vOffset.textContent = cfg.piey + 'px';
+        vRow.textContent = cfg.rowoffset + 'px';
+        vCount.textContent = String(cfg.count);
+
+        modeSel.addEventListener('change', ()=>{ cfg.mode = modeSel.value; render(); });
+        sizeRange.addEventListener('input', ()=>{ cfg.size = parseInt(sizeRange.value,10); root.style.setProperty('--size', String(cfg.size)); vSize.textContent = cfg.size + 'px'; render(); });
+        offsetRange.addEventListener('input', ()=>{ cfg.piey = parseInt(offsetRange.value,10); vOffset.textContent = cfg.piey + 'px'; render(); });
+        rowRange.addEventListener('input', ()=>{ cfg.rowoffset = parseInt(rowRange.value,10); root.style.setProperty('--row-offset', cfg.rowoffset + 'px'); vRow.textContent = cfg.rowoffset + 'px'; });
+        countRange.addEventListener('input', ()=>{ cfg.count = parseInt(countRange.value,10); vCount.textContent = String(cfg.count); render(); });
+
+        function buildDefs(S){
+          const scalePct = cfg.patscale;
+          const k = 100/scalePct;
+          const step = n => n*k*S;
+          const stepSw = n => n*k;
+          const lw = S*1.6;
+          const lwThin = S*1.2;
+
+          const chart = [
+            patDiag(step(10), +45, lw, 'p1-'+uid),
+            patDots(step(12), step(3.2), 'p2-'+uid),
+            patV(step(8), lw, 'p3-'+uid),
+            patCheck(step(12), 'p4-'+uid),
+            patDiag(step(10), -45, lwThin, 'p5-'+uid),
+            patGrid(step(8), lwThin, 'p6-'+uid),
+            patDots(step(8), step(1.9), 'p7-'+uid),
+            patH(step(8), lw, 'p8-'+uid),
+            patDiamond(step(10), lwThin, 'p9-'+uid),
+            patGrid(step(14), lw, 'p10-'+uid)
+          ];
+
+          const sw = [
+            patDiag(stepSw(10), +45, 1.6, 'p1-'+uid+'-sw'),
+            patDots(stepSw(12), stepSw(3.2), 'p2-'+uid+'-sw'),
+            patV(stepSw(8), 1.6, 'p3-'+uid+'-sw'),
+            patCheck(stepSw(12), 'p4-'+uid+'-sw'),
+            patDiag(stepSw(10), -45, 1.2, 'p5-'+uid+'-sw'),
+            patGrid(stepSw(8), 1.2, 'p6-'+uid+'-sw'),
+            patDots(stepSw(8), stepSw(1.9), 'p7-'+uid+'-sw'),
+            patH(stepSw(8), 1.6, 'p8-'+uid+'-sw'),
+            patDiamond(stepSw(10), 1.2, 'p9-'+uid+'-sw'),
+            patGrid(stepSw(14), 1.6, 'p10-'+uid+'-sw')
+          ];
+
+          defs.innerHTML = chart.concat(sw).join('');
+        }
+
+        function palettePatterns(id){ return [`url(#p1-${id})`,`url(#p2-${id})`,`url(#p3-${id})`,`url(#p4-${id})`,`url(#p5-${id})`,`url(#p6-${id})`,`url(#p7-${id})`,`url(#p8-${id})`,`url(#p9-${id})`,`url(#p10-${id})`]; }
+        function palettePatternsSw(id){ return [`url(#p1-${id}-sw)`,`url(#p2-${id}-sw)`,`url(#p3-${id}-sw)`,`url(#p4-${id}-sw)`,`url(#p5-${id}-sw)`,`url(#p6-${id}-sw)`,`url(#p7-${id}-sw)`,`url(#p8-${id}-sw)`,`url(#p9-${id}-sw)`,`url(#p10-${id}-sw)`]; }
+        const paletteGray = ['var(--gray-1)','var(--gray-2)','var(--gray-3)','var(--gray-4)','var(--gray-5)','var(--gray-6)','var(--gray-7)','var(--gray-8)','var(--gray-9)','var(--gray-10)'];
+
+        function polar(cx,cy,r,deg){ const rad=(deg-90)*Math.PI/180; return [cx+r*Math.cos(rad), cy+r*Math.sin(rad)]; }
+        function arcPath(cx,cy,rO,rI,a0,a1){ const large=(a1-a0)>180?1:0; const [x0,y0]=polar(cx,cy,rO,a0); const [x1,y1]=polar(cx,cy,rO,a1); const [x2,y2]=polar(cx,cy,rI,a1); const [x3,y3]=polar(cx,cy,rI,a0); return ['M',x0,y0,'A',rO,rO,0,large,1,x1,y1,'L',x2,y2,'A',rI,rI,0,large,0,x3,y3,'Z'].join(' '); }
+
+        function render(){
+          const S = 1000 / cfg.size;
+          buildDefs(S);
+          while(g.firstChild) g.removeChild(g.firstChild);
+          legend.innerHTML = '';
+
+          const items = JSON.parse(JSON.stringify(payload.items.slice(0, cfg.count)));
+          const total = items.reduce((a,b)=>a+Number(b.value||0),0) || 1;
+          const palChart = cfg.mode === 'grayscale' ? paletteGray : palettePatterns(uid);
+          const palSw = cfg.mode === 'grayscale' ? paletteGray : palettePatternsSw(uid);
+
+          let a = 0;
+          const rO = 490;
+          const rI = rO * (1 - parseInt(getComputedStyle(root).getPropertyValue('--thickness'))/100);
+          const cx = 500, cy = 500 + (cfg.piey * S);
+
+          items.forEach((d,i)=>{
+            const span = 360 * (d.value/total);
+            const a0 = a;
+            const a1 = (i === items.length-1) ? 360 : a+span;
+            a = a1;
+
+            const p = document.createElementNS('http://www.w3.org/2000/svg','path');
+            p.setAttribute('d', arcPath(cx,cy,rO,rI,a0,a1));
+            p.setAttribute('fill', palChart[i % palChart.length]);
+            p.setAttribute('stroke','#000');
+            p.setAttribute('stroke-width', String(S));
+            p.setAttribute('shape-rendering','geometricPrecision');
+            g.appendChild(p);
+
+            const row = document.createElement('div');
+            row.className = 'legend-row';
+            const sw = document.createElementNS('http://www.w3.org/2000/svg','svg');
+            const sz = parseFloat(getComputedStyle(root).getPropertyValue('--swatch'));
+            sw.setAttribute('width', sz);
+            sw.setAttribute('height', sz);
+            const rect = document.createElementNS('http://www.w3.org/2000/svg','rect');
+            rect.setAttribute('x','0'); rect.setAttribute('y','0'); rect.setAttribute('width','100%'); rect.setAttribute('height','100%');
+            rect.setAttribute('fill', palSw[i % palSw.length]);
+            rect.setAttribute('stroke','#000'); rect.setAttribute('stroke-width', '1');
+            sw.appendChild(rect);
+
+            const name = document.createElement('div'); name.className='name'; name.textContent = d.name;
+            const val = document.createElement('div'); val.className='val'; val.textContent = (+d.value).toFixed(1) + (payload.unit||'');
+            row.appendChild(sw); row.appendChild(name); row.appendChild(val);
+            legend.appendChild(row);
+          });
+        }
+
+        function patDiag(step, deg, lw, id){
+          return `<pattern id="${id}" patternUnits="userSpaceOnUse" width="${step}" height="${step}" patternTransform="rotate(${deg})">
+            <rect width="${step}" height="${step}" fill="#fff"></rect>
+            <path d="M 0 0 L 0 ${step} M ${step} -${step} L ${step} ${step} M -${step} 0 L -${step} ${step}" stroke="#000" stroke-width="${lw}" vector-effect="non-scaling-stroke"></path>
+          </pattern>`;
+        }
+        function patGrid(step, lw, id){
+          return `<pattern id="${id}" patternUnits="userSpaceOnUse" width="${step}" height="${step}">
+            <rect width="${step}" height="${step}" fill="#fff"></rect>
+            <path d="M 0 0 L 0 ${step} M ${step} 0 L ${step} ${step} M 0 0 L ${step} 0 M 0 ${step} L ${step} ${step}" stroke="#000" stroke-width="${lw}" vector-effect="non-scaling-stroke"></path>
+          </pattern>`;
+        }
+        function patDiamond(step, lw, id){
+          return `<pattern id="${id}" patternUnits="userSpaceOnUse" width="${step}" height="${step}" patternTransform="rotate(45)">
+            <rect width="${step}" height="${step}" fill="#fff"></rect>
+            <path d="M 0 0 L 0 ${step} M ${step} 0 L ${step} ${step} M 0 0 L ${step} 0 M 0 ${step} L ${step} ${step}" stroke="#000" stroke-width="${lw}" vector-effect="non-scaling-stroke"></path>
+          </pattern>`;
+        }
+        function patDots(step, r, id){
+          const c = step/2;
+          return `<pattern id="${id}" patternUnits="userSpaceOnUse" width="${step}" height="${step}">
+            <rect width="${step}" height="${step}" fill="#fff"></rect>
+            <circle cx="${c}" cy="${c}" r="${r}" fill="#000"></circle>
+          </pattern>`;
+        }
+        function patH(step, lw, id){
+          return `<pattern id="${id}" patternUnits="userSpaceOnUse" width="${step}" height="${step}">
+            <rect width="${step}" height="${step}" fill="#fff"></rect>
+            <path d="M 0 0 L ${step} 0" stroke="#000" stroke-width="${lw}" vector-effect="non-scaling-stroke"></path>
+          </pattern>`;
+        }
+        function patV(step, lw, id){
+          return `<pattern id="${id}" patternUnits="userSpaceOnUse" width="${step}" height="${step}">
+            <rect width="${step}" height="${step}" fill="#fff"></rect>
+            <path d="M 0 0 L 0 ${step}" stroke="#000" stroke-width="${lw}" vector-effect="non-scaling-stroke"></path>
+          </pattern>`;
+        }
+        function patCheck(step, id){
+          const h = step/2;
+          return `<pattern id="${id}" patternUnits="userSpaceOnUse" width="${step}" height="${step}">
+            <rect width="${step}" height="${step}" fill="#fff"></rect>
+            <rect x="0" y="0" width="${h}" height="${h}" fill="#000"></rect>
+            <rect x="${h}" y="${h}" width="${h}" height="${h}" fill="#000"></rect>
+          </pattern>`;
+        }
+
+        render();
+      })();
+    </script>
+  </div>
+</body>
+</html>
