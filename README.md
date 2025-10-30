@@ -5,8 +5,6 @@ A zero-dependency, drop-in pie chart for TRMNL and the web.
 Supports **10 distinct SVG hatch patterns** and **10 grayscale shades**, live “knobs” for layout, and **in-source data attributes** for touchscreen-free devices like TRMNL.
 
 ![Demo](media/screenshot.png)
-![Demo](media/TRMNL-Pie-Donut-POC-Demo.mp4)
-
 
 ## Features
 - 10 unmistakable hatch patterns + 10 grayscale fills
